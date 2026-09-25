@@ -1270,9 +1270,24 @@ function buildPdf(){
 }
 
 var dlPromise=(window.claude&&typeof window.claude.use==='function')?window.claude.use('downloads'):Promise.resolve(null);
+function ensurePdfLib(){
+  if(window.jspdf&&window.jspdf.jsPDF)return Promise.resolve(true);
+  return new Promise(function(res){
+    var done=false,fin=function(){if(!done){done=true;res(!!(window.jspdf&&window.jspdf.jsPDF));}};
+    var t=document.createElement('script');
+    t.src='vendor/jspdf.umd.min.js?r='+Date.now();
+    t.onload=fin;t.onerror=fin;document.head.appendChild(t);
+    setTimeout(fin,6000);
+  });
+}
+var PDFWAIT='The PDF tool is not on this device yet. Open BoxSheet once with data on, then it works offline too.';
 function downloadPdf(){
+  var msg=$('pdfMsg');msg.textContent='Making the PDF…';
+  ensurePdfLib().then(function(ok){if(!ok){msg.textContent=PDFWAIT;return;}doDownloadPdf();});
+}
+function doDownloadPdf(){
   var msg=$('pdfMsg'),doc=buildPdf();
-  if(!doc){msg.textContent='The PDF tool has not loaded. Check your connection and try again.';return;}
+  if(!doc){msg.textContent='Could not build the PDF. Try again.';return;}
   var base=(lastI.model||'box-costing').replace(/[^A-Za-z0-9 _-]+/g,'').trim().replace(/\s+/g,'-')||'box-costing';
   var name=base+'-'+Math.round(lastI.bL)+'x'+Math.round(lastI.bW)+'x'+Math.round(lastI.bH)+'.pdf';
   dlPromise.then(function(dl){
@@ -1317,8 +1332,12 @@ function buildDrawing(){
 }
 $('drawToCost').addEventListener('click',function(){DRAW=false;go('board');});
 $('drawPdf').addEventListener('click',function(){
+  var msg=$('drawMsg');msg.textContent='Making the drawing…';
+  ensurePdfLib().then(function(ok){if(!ok){msg.textContent=PDFWAIT;return;}doDrawPdf();});
+});
+function doDrawPdf(){
   var msg=$('drawMsg'),doc=buildDrawing();
-  if(!doc){msg.textContent='The PDF tool has not loaded. Check your connection and try again.';return;}
+  if(!doc){msg.textContent='Could not build the drawing. Try again.';return;}
   var base=(lastI.model||'key-line-diagram').replace(/[^A-Za-z0-9 _-]+/g,'').trim().replace(/\s+/g,'-')||'key-line-diagram';
   var name=base+'-KLD-'+Math.round(lastI.bL)+'x'+Math.round(lastI.bW)+'x'+Math.round(lastI.bH)+'.pdf';
   dlPromise.then(function(dl){
@@ -1326,7 +1345,7 @@ $('drawPdf').addEventListener('click',function(){
       .catch(function(e){msg.textContent=(e&&e.code==='declined')?'Download cancelled.':'This view cannot save files. Open the page in the Claude app or a browser and try again.';});}
     try{doc.save(name);msg.textContent='Saved '+name+'.';}catch(e){msg.textContent='This view cannot save files.';}
   });
-});
+}
 
 /* ---------- start ---------- */
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}
