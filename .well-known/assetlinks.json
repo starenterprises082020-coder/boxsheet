@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "io.github.starenterprises082020_coder.twa",
+        "sha256_cert_fingerprints": ["C1:5F:E9:F7:AE:0E:5A:2E:A6:07:D3:05:66:46:CB:6D:0B:67:A7:BC:02:EE:DD:DF:C6:1B:B0:7F:32:E1:9F:E9"]
+      }
+    }]
